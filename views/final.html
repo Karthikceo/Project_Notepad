@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Taking App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            color: #333;
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: normal;
+        }
+
+        .back-arrow {
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .main-content {
+            display: flex;
+            width: 100%;
+            height: calc(100vh - 80px); /* Adjust height to account for header and footer */
+            box-sizing: border-box;
+        }
+
+        .side-panel {
+            width: 250px;
+            background-color: #fff;
+            border-right: 1px solid #ccc;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .side-panel h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .login-section, .note-section, .saved-notes {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .note-section h2, .saved-notes h2 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .note-section textarea {
+            width: 100%;
+            height: 100px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .note-section button, .login-section button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .note-section button:hover, .login-section button:hover {
+            background-color: #0056b3;
+        }
+
+        .saved-notes ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .saved-notes li {
+            background-color: #f9f9f9;
+            margin: 5px 0;
+            padding: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .saved-notes .note-content {
+            flex: 1;
+            text-align: left;
+        }
+
+        .saved-notes .note-actions button {
+            margin-left: 10px;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .saved-notes .note-actions button:hover {
+            background-color: #0056b3;
+        }
+
+        .note-date {
+            font-size: 12px;
+            color: #999;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>NotePAD</h1>
+            <div class="back-arrow" onclick="logout()">←</div>
+        </div>
+        <div class="main-content">
+            <div class="side-panel">
+                <h2>Saved Notes</h2>
+                <ul id="notesList">
+                    <!-- Saved notes will be appended here -->
+                </ul>
+            </div>
+            <div class="content">
+                <div class="login-section">
+                    <h2>Enter your name</h2>
+                    <input type="text" id="username" placeholder="Enter your name">
+                    <button onclick="login()">Go</button>
+                </div>
+
+                <div class="note-section" style="display:none;">
+                    <h2>Create a New Note</h2>
+                    <textarea id="newNote" placeholder="Write your note here..."></textarea>
+                    <button onclick="createNote()">Save Note</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        function login() {
+            const username = document.getElementById('username').value.trim();
+            if (username) {
+                currentUser = username;
+                document.querySelector('.login-section').style.display = 'none';
+                document.querySelector('.note-section').style.display = 'block';
+                loadNotes();
+            } else {
+                alert('Please enter a name.');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            document.querySelector('.login-section').style.display = 'block';
+            document.querySelector('.note-section').style.display = 'none';
+            document.getElementById('username').value = '';
+            document.getElementById('notesList').innerHTML = '';
+        }
+
+        function loadNotes() {
+            const notesList = document.getElementById('notesList');
+            notesList.innerHTML = '';
+            const notes = JSON.parse(localStorage.getItem(currentUser) || '[]');
+            notes.forEach((note, index) => {
+                const noteItem = document.createElement('li');
+                noteItem.innerHTML = `
+                    <div class="note-content">
+                        <p>${note.text}</p>
+                        <p class="note-date">${new Date(note.date).toLocaleString()}</p>
+                    </div>
+                    <div class="note-actions">
+                        <button onclick="editNote(${index})">Edit</button>
+                        <button onclick="deleteNote(${index})">Delete</button>
+                    </div>
+                `;
+                notesList.appendChild(noteItem);
+            });
+        }
+
+        function createNote() {
+            const noteText = document.getElementById('newNote').value.trim();
+            if (noteText) {
+                const notes = JSON.parse(localStorage.getItem(currentUser) || '[]');
+                notes.push({ text: noteText, date: new Date().toISOString() });
+                localStorage.setItem(currentUser, JSON.stringify(notes));
+                document.getElementById('newNote').value = ''; // Clear the textarea
+                loadNotes();
+            } else {
+                alert('Please write something before saving the note.');
+            }
+        }
+
+        function editNote(index) {
+            const notes = JSON.parse(localStorage.getItem(currentUser) || '[]');
+            const newText = prompt('Edit your note:', notes[index].text);
+            if (newText !== null && newText.trim() !== '') {
+                notes[index].text = newText;
+                localStorage.setItem(currentUser, JSON.stringify(notes));
+                loadNotes();
+            }
+        }
+
+        function deleteNote(index) {
+            const notes = JSON.parse(localStorage.getItem(currentUser) || '[]');
+            if (confirm('Are you sure you want to delete this note?')) {
+                notes.splice(index, 1);
+                localStorage.setItem(currentUser, JSON.stringify(notes));
+                loadNotes();
+            }
+        }
+    </script>
+</body>
+
+</html>
